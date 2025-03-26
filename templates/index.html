@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>誰是兇手</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 新增底部圖像樣式 */
+        footer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #story-image {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            animation: fadeIn 1.5s forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>誰是兇手</h1>
+        <div id="case-info"></div>
+        <div class="main">
+            <div class="roles">
+                <h3>角色</h3>
+                <div id="role-buttons"></div>
+            </div>
+            <div class="chat">
+                <textarea id="chat-area" readonly></textarea>
+                <input type="text" id="question" placeholder="輸入你的問題">
+                <button onclick="sendQuestion()">提交</button>
+            </div>
+            <div class="actions">
+                <button onclick="guessKiller()">猜兇手</button>
+            </div>
+        </div>
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <p id="modal-text"></p>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <img id="story-image" src="" alt="案件場景">
+    </footer>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

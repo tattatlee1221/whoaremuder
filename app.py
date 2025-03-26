@@ -222,6 +222,9 @@ def guess_killer():
 def index():
     return render_template('index.html')
 
+#if __name__ == "__main__":
+#    print("啟動Flask應用...")
+#    app.run(debug=True, host='0.0.0.0', port=5000)
 if __name__ == "__main__":
-    print("啟動Flask應用...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.getenv("PORT", 5000))  # Railway 提供 PORT，預設 5000
+    app.run(debug=False, host='0.0.0.0', port=port)  # debug=False 更安全

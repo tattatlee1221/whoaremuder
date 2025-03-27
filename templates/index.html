@@ -2,54 +2,221 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>誰是兇手</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* 新增底部圖像樣式 */
-        footer {
-            margin-top: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
             text-align: center;
         }
-        #story-image {
-            max-width: 100%;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            animation: fadeIn 1.5s forwards;
+        #case-background, #roles, #conversation {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
         }
-        @keyframes fadeIn {
-            to { opacity: 1; }
+        #case-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        button, select, input {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            max-width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #roles-list div {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        #conversation div {
+            margin: 5px 0;
+            padding: 5px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        /* Loading 遮罩 */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 手機適配 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            button, select, input {
+                font-size: 14px;
+                max-width: 100%;
+            }
+            #case-background, #roles, #conversation {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>誰是兇手</h1>
-        <div id="case-info"></div>
-        <div class="main">
-            <div class="roles">
-                <h3>角色</h3>
-                <div id="role-buttons"></div>
-            </div>
-            <div class="chat">
-                <textarea id="chat-area" readonly></textarea>
-                <input type="text" id="question" placeholder="輸入你的問題">
-                <button onclick="sendQuestion()">提交</button>
-            </div>
-            <div class="actions">
-                <button onclick="guessKiller()">猜兇手</button>
-            </div>
-        </div>
-        <div id="modal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <p id="modal-text"></p>
-            </div>
-        </div>
+    <h1>誰是兇手</h1>
+    <button onclick="startGame()">開始遊戲</button>
+    <div id="case-background"></div>
+    <img id="case-image" style="display: none;" alt="案件場景">
+    <div id="roles">
+        <h2>角色</h2>
+        <div id="roles-list"></div>
     </div>
-    <footer>
-        <img id="story-image" src="" alt="案件場景">
-    </footer>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <div id="conversation">
+        <h2>對話</h2>
+        <select id="role-select"></select>
+        <input type="text" id="question" placeholder="問一個問題">
+        <button onclick="talkToRole()">問問題</button>
+        <div id="conversation-log"></div>
+    </div>
+    <div>
+        <h2>猜兇手</h2>
+        <select id="killer-guess"></select>
+        <button onclick="guessKiller()">提交猜測</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- Loading 遮罩 -->
+    <div id="loading-overlay">
+        <div id="loading-spinner"></div>
+    </div>
+
+    <script>
+        let gameData = null;
+
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        async function startGame() {
+            showLoading();
+            const response = await fetch('/init');
+            gameData = await response.json();
+            hideLoading();
+
+            const caseDiv = document.getElementById('case-background');
+            caseDiv.innerHTML = `
+                <h2>案件背景</h2>
+                <p>地點: ${gameData.case.location}</p>
+                <p>案件: ${gameData.case.case_type}</p>
+                <p>時間: ${gameData.case.time}</p>
+                <p>受害者: ${gameData.case.victim}</p>
+                <p>事件: ${gameData.case.events}</p>
+            `;
+
+            const image = document.getElementById('case-image');
+            image.src = gameData.image_url;
+            image.style.display = 'block';
+
+            const rolesDiv = document.getElementById('roles-list');
+            rolesDiv.innerHTML = '';
+            const roleSelect = document.getElementById('role-select');
+            const killerSelect = document.getElementById('killer-guess');
+            roleSelect.innerHTML = '<option value="">選擇角色</option>';
+            killerSelect.innerHTML = '<option value="">選擇兇手</option>';
+
+            for (const [role, data] of Object.entries(gameData.roles)) {
+                rolesDiv.innerHTML += `<div>${role} (${data.personality})</div>`;
+                roleSelect.innerHTML += `<option value="${role}">${role}</option>`;
+                killerSelect.innerHTML += `<option value="${role}">${role}</option>`;
+            }
+        }
+
+        async function talkToRole() {
+            const role = document.getElementById('role-select').value;
+            const question = document.getElementById('question').value;
+            if (!role || !question) {
+                alert('請選擇角色並輸入問題！');
+                return;
+            }
+            showLoading();
+            const response = await fetch('/talk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role, question, game_data: gameData })
+            });
+            const data = await response.json();
+            hideLoading();
+
+            const log = document.getElementById('conversation-log');
+            log.innerHTML += `<div>${role}: ${data.response}</div>`;
+            document.getElementById('question').value = '';
+        }
+
+        async function guessKiller() {
+            const guess = document.getElementById('killer-guess').value;
+            if (!guess) {
+                alert('請選擇一個兇手！');
+                return;
+            }
+            showLoading();
+            const response = await fetch('/guess', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guess, game_data: gameData })
+            });
+            const data = await response.json();
+            hideLoading();
+
+            const result = document.getElementById('result');
+            result.innerHTML = `<p>猜測${data.correct ? '正確' : '錯誤'}！</p><p>${data.summary}</p>`;
+        }
+    </script>
 </body>
 </html>

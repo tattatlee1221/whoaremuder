@@ -138,7 +138,7 @@ def init_game():
     
     # 從 case 生成圖像 Prompt
     case = game_data["case"]
-    image_prompt = f"在{case['location']}，{case['time']}的時間，發生了神秘事件卡通風格。"
+    image_prompt = f"在{case['location']}，{case['time']}的時間，現代CG風格。"
     image_url = f"https://image.pollinations.ai/prompt/{quote(image_prompt)}?width=1024&height=768&model=flux-realism"
     
     # 將 image_url 加入 game_data
@@ -222,9 +222,9 @@ def guess_killer():
 def index():
     return render_template('index.html')
 
-#if __name__ == "__main__":
-#    print("啟動Flask應用...")
-#    app.run(debug=True, host='0.0.0.0', port=5000)
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))  # Railway 提供 PORT，預設 5000
-    app.run(debug=False, host='0.0.0.0', port=port)  # debug=False 更安全
+    print("啟動Flask應用...")
+    app.run(debug=True, host='0.0.0.0', port=5000)
+#if __name__ == "__main__":
+#    port = int(os.getenv("PORT", 5000))  # Railway 提供 PORT，預設 5000
+#    app.run(debug=False, host='0.0.0.0', port=port)  # debug=False 更安全

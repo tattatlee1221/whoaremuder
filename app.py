@@ -138,7 +138,7 @@ def init_game():
     
     # 從 case 生成圖像 Prompt
     case = game_data["case"]
-    image_prompt = f"在{case['location']}，{case['time']}的時間，現代CG風格。"
+    image_prompt = f"在{case['location']}，{case['time']}的時間，現代風格。"
     image_url = f"https://image.pollinations.ai/prompt/{quote(image_prompt)}?width=1024&height=768&model=flux-realism"
     
     # 將 image_url 加入 game_data
